@@ -1,0 +1,31 @@
+{
+  "name": "Redirect Page Auto Closer for Slack",
+  "description": "Automatically closes Slack redirect pages and restores focus to the tab you were on before.",
+  "version": "0.0.1",
+  "manifest_version": 3,
+  "homepage_url": "https://github.com/ronniem/redirect-page-auto-closer-for-slack",
+  "icons": {
+    "16": "icons/icon-128.png",
+    "48": "icons/icon-128.png",
+    "128": "icons/icon-128.png"
+  },
+  "permissions": [],
+  "background": {
+    "service_worker": "src/background.js"
+  },
+  "content_scripts": [
+    {
+      "run_at": "document_end",
+      "matches": [
+        "*://*.slack.com/archives/*",
+        "*://*.slack.com/app_redirect*"
+      ],
+      "js": [
+        "src/content.js"
+      ],
+      "css": [
+        "src/content.css"
+      ]
+    }
+  ]
+}

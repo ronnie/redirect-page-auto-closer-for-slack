@@ -1,0 +1,64 @@
+.redirect-page-auto-closer-for-slack-wrapper {
+  position: absolute;
+  margin: auto;
+  left: 0;
+  right: 0;
+  /* top: 100px; */
+  /* top: 8px; */
+  top: 0;
+  /* Because we added padding, we need to skoot back to the top */
+  z-index: 999;
+  width: fit-content;
+}
+
+.redirect-page-auto-closer-for-slack-wrapper .redirect-page-auto-closer-for-slack-main-pop-over {
+  padding: 6px;
+  padding-left: 10px;
+  padding-right: 10px;
+  text-align: center;
+  color: #3a3c3e;
+  font-size: 18px;
+  font-weight: 400;
+  text-shadow: 0 0 2px white, 0 0 4px white, 0 0 6px snow, 0 0 10px snow;
+  background: hsla(0, 0%, 100%, 90%);
+  box-shadow: 0px 1px 10px 1px rgba(0, 0, 0, 0.67);
+  border-radius: 4px;
+}
+
+.redirect-page-auto-closer-for-slack-wrapper .redirect-page-auto-closer-for-slack-main-pop-over .redirect-page-auto-closer-for-slack-countdown-text {
+  margin-bottom: 6px;
+}
+
+.redirect-page-auto-closer-for-slack-wrapper .redirect-page-auto-closer-for-slack-main-pop-over .redirect-page-auto-closer-for-slack-stop-link {
+  cursor: pointer;
+  font-size: 16px;
+  padding: 4px;
+}
+
+.redirect-page-auto-closer-for-slack-wrapper .redirect-page-auto-closer-for-slack-main-pop-over .redirect-page-auto-closer-for-slack-close-now-btn {
+  cursor: pointer;
+  font-weight: bold;
+  padding: 4px;
+  font-size: 16px;
+  margin-left: 36px;
+}
+
+.redirect-page-auto-closer-for-slack-wrapper .redirect-page-auto-closer-for-slack-settings-menu {
+  margin-top: 6px;
+  padding: 6px;
+  padding-left: 10px;
+  padding-right: 10px;
+  text-align: center;
+  color: #1e1e1f;
+  font-size: 12px;
+  font-weight: 400;
+  background: rgb(255 240 178 / 80%);
+  box-shadow: 0px 1px 5px 1px rgba(0, 0, 0, 0.33);
+  border-radius: 2px;
+}
+
+.redirect-page-auto-closer-for-slack-wrapper .redirect-page-auto-closer-for-slack-settings-menu .redirect-page-auto-closer-for-slack-settings-option {
+  cursor: pointer;
+  font-size: 12px;
+  padding: 1px;
+}
