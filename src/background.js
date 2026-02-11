@@ -1,4 +1,7 @@
 // Background script
+const storageKey_CountdownStartTimeMs = `rpacfs_timer`;
+const defaultCountdownStartTimeMs = 20 * 1000;
+
 const windowToLastActiveTabIdsMap = {}
 
 function getLastActiveTabIdsListForWindowId(windowId) {
@@ -49,11 +52,29 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       // is the lastActiveTabId for this window. So we will change
       // the focus to the tab previously active in this window.
       focusTab(activeBeforeLastTabId);
-      console.log('RPACFS: Recovered the active tab before slack redirect.');
+      console.log('Recovered the active tab before slack redirect.');
     }
   }
   
   chrome.tabs.remove(tabId);
 });
 
-console.log(`RPACFS: redirect-page-auto-closer-for-slack loaded.`)
+chrome.contextMenus.create({
+  id: 'rpacfs-reset-countdown',
+  title: `Reset countdown to default (${Math.round(defaultCountdownStartTimeMs / 1000)} seconds)`,
+  contexts: ['action'],
+});
+
+chrome.contextMenus.onClicked.addListener((info, tab) => {
+  if (info.menuItemId === 'rpacfs-reset-countdown') {
+    chrome.storage.local.set({ [storageKey_CountdownStartTimeMs]: defaultCountdownStartTimeMs }, () => {
+      if (chrome.runtime.lastError) {
+        console.error('Reset failed:', chrome.runtime.lastError.message);
+      } else {
+        console.log('Countdown reset to default via extension icon menu.');
+      }
+    });
+  }
+});
+
+console.log(`redirect-page-auto-closer-for-slack loaded.`)

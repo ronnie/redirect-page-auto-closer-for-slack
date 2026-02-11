@@ -1,6 +1,7 @@
-const intervalRateMs = 1000;
-const maxCountdownStartTimeMs = 35 * 1000;
+const defaultCountdownStartTimeMs = 20 * 1000;
 const minCountdownStartTimeMs = 0;
+const maxCountdownStartTimeMs = 60 * 1000;
+const intervalRateMs = 1000;
 
 const cssClassName_Wrapper = `redirect-page-auto-closer-for-slack-wrapper`;
 const cssClassName_MainPopOver = `redirect-page-auto-closer-for-slack-main-pop-over`;
@@ -11,42 +12,82 @@ const cssClassName_StopLink = `redirect-page-auto-closer-for-slack-stop-link`;
 const cssClassName_SettingsMenu = `redirect-page-auto-closer-for-slack-settings-menu`;
 const cssClassName_SettingsOption = `redirect-page-auto-closer-for-slack-settings-option`;
 
-const localStorageKey_CountdownStartTimeMs = `b9d55053-5a15-4b65-98ce-73711e1d83f9`;
+const storageKey_CountdownStartTimeMs = `rpacfs_timer`;
+
+/** Cached countdown (synced from chrome.storage); used for sync reads. */
+let savedCountdownStartTimeMs = defaultCountdownStartTimeMs;
 
 function log(text) {
   console.log(`RPACFS: ${text}`);
 }
 
-log('loaded...');
-
-let timeTillCloseMs = getCountdownStartTimeMs();
-
 function getCountdownStartTimeMs() {
-  const defaultStartTimeMs = 21 * 1000;
-  let startTimeMs = defaultStartTimeMs;
-  try {
-    startTimeMs = Number(localStorage.getItem(localStorageKey_CountdownStartTimeMs));
-  } catch (e) {
-    console.error(e);
-  }
-  if (typeof startTimeMs !== 'number' || isNaN(startTimeMs) || startTimeMs < minCountdownStartTimeMs || startTimeMs > maxCountdownStartTimeMs) {
-    setCountdownStartTimeMs(defaultStartTimeMs); // Overwrite to self-correct
-    startTimeMs = defaultStartTimeMs;
-  }
-  return startTimeMs;
+  return new Promise((resolve) => {
+    if (!chrome?.storage?.local) {
+      log('chrome.storage.local unavailable; using default');
+      savedCountdownStartTimeMs = defaultCountdownStartTimeMs;
+      resolve(defaultCountdownStartTimeMs);
+      return;
+    }
+    chrome.storage.local.get([storageKey_CountdownStartTimeMs], (result) => {
+      if (chrome.runtime?.lastError) {
+        log(`Storage get failed: ${chrome.runtime.lastError.message}; using default ${defaultCountdownStartTimeMs}ms`);
+        savedCountdownStartTimeMs = defaultCountdownStartTimeMs;
+        setCountdownStartTimeMs(defaultCountdownStartTimeMs).then(() => resolve(defaultCountdownStartTimeMs));
+        return;
+      }
+      let startTimeMs = result[storageKey_CountdownStartTimeMs];
+      startTimeMs = typeof startTimeMs === 'number' ? startTimeMs : Number(startTimeMs);
+      if (typeof startTimeMs !== 'number' || isNaN(startTimeMs) || startTimeMs < minCountdownStartTimeMs || startTimeMs > maxCountdownStartTimeMs) {
+        startTimeMs = defaultCountdownStartTimeMs;
+        setCountdownStartTimeMs(startTimeMs).then(() => {
+          savedCountdownStartTimeMs = startTimeMs;
+          resolve(startTimeMs);
+        });
+      } else {
+        savedCountdownStartTimeMs = startTimeMs;
+        resolve(startTimeMs);
+      }
+    });
+  });
 }
 
 function setCountdownStartTimeMs(startTimeMs) {
-  localStorage.setItem(localStorageKey_CountdownStartTimeMs, startTimeMs);
+  savedCountdownStartTimeMs = startTimeMs;
+  return new Promise((resolve) => {
+    if (!chrome?.storage?.local) {
+      log('chrome.storage.local unavailable; skipped save');
+      resolve();
+      return;
+    }
+    chrome.storage.local.set({ [storageKey_CountdownStartTimeMs]: startTimeMs }, () => {
+      if (chrome.runtime?.lastError) {
+        log(`Storage set failed: ${chrome.runtime.lastError.message}`);
+      } else {
+        log(`Storage saved: ${storageKey_CountdownStartTimeMs}=${startTimeMs}`);
+      }
+      resolve();
+    });
+  });
 }
+
+log('loaded...');
+
+let timeTillCloseMs = defaultCountdownStartTimeMs;
+let intervalId;
+
+(async function init() {
+  timeTillCloseMs = await getCountdownStartTimeMs();
+  intervalId = setInterval(countDownToClose, intervalRateMs);
+})();
 
 function getWrapperEl() {
   return document.documentElement.querySelector(`.${cssClassName_Wrapper}`);
 }
 
 function countdownWithText(countdownTimeMs) {
-  if (false) {//Used for freezing the countdown to debugging styling
-    countdownTimeMs = getCountdownStartTimeMs();
+  if (false) { // Used for freezing the countdown when debugging styling
+    countdownTimeMs = savedCountdownStartTimeMs;
     clearInterval(intervalId);
   }
 
@@ -85,7 +126,7 @@ function countdownWithText(countdownTimeMs) {
 
 function injectAndUpdateSettingsMenu() {
   const incrementalSec = 1;
-  const trueCountdownStartTimeSec = Math.round(getCountdownStartTimeMs() / 1000);
+  const trueCountdownStartTimeSec = Math.round(savedCountdownStartTimeMs / 1000);
 
   const optionsList = [];
   const decrementValSec = trueCountdownStartTimeSec - incrementalSec;
@@ -106,7 +147,7 @@ function injectAndUpdateSettingsMenu() {
   const settingsEl = document.createElement('div');
   settingsEl.classList.add(cssClassName_SettingsMenu);
   settingsEl.innerHTML = `
-  ${trueCountdownStartTimeSec} second${trueCountdownStartTimeSec !== 1 ? 's' : ''} not your speed?  Try 
+  ${trueCountdownStartTimeSec} second${trueCountdownStartTimeSec !== 1 ? 's' : ''} not your speed? Try
   <a class='${cssClassName_SettingsOption}'>${optionsList[0]}s</a>
   `;
   if (optionsList.length > 1) {
@@ -116,23 +157,15 @@ function injectAndUpdateSettingsMenu() {
     `;
   }
   const optionsElList = settingsEl.querySelectorAll(`.${cssClassName_SettingsOption}`);
-  for (let i = 0; i < optionsElList.length; i++) {
-    const optionEl = optionsElList[i];
+  optionsElList.forEach((optionEl, i) => {
     const op = optionsList[i];
     optionEl.onclick = () => {
-      log(`New option selected: ${op}`);
-      const ms = op * 1000;
-      timeTillCloseMs = ms;
-      setCountdownStartTimeMs(ms);
+      log(`New time selected: ${op}`);
+      setCountdownStartTimeMs(op * 1000); // save for next pageview; current countdown continues unchanged
       injectAndUpdateSettingsMenu();
     };
-
-  }
+  });
   wrapperEl.appendChild(settingsEl);
-}
-
-function getUrl() {
-  return new URL(window.location.href);
 }
 
 function isPageTextLikeSlackRedirect() {
@@ -140,22 +173,28 @@ function isPageTextLikeSlackRedirect() {
   if (!document.body) return false;
   
   const pageText = document.body.innerText?.toLowerCase() || '';
-  return pageText.includes('redirecting to') || 
-         pageText.includes('redirected you') || 
-         pageText.includes('launching');
+  return (
+    pageText.includes('redirecting to') ||
+    pageText.includes('redirected you') ||
+    pageText.includes('launching')
+  );
 }
+
+let isSlackRedirectPageCached = null;
 
 function countDownToClose() {
   timeTillCloseMs -= intervalRateMs;
-  log(`TimeMs left: ${timeTillCloseMs} isPageText=${isPageTextLikeSlackRedirect()}`);
 
-  if (isPageTextLikeSlackRedirect()) {
-    log(`All checks good to auto close`);
-  } else {
+  if (isSlackRedirectPageCached === null) {
+    isSlackRedirectPageCached = isPageTextLikeSlackRedirect();
+  }
+  if (!isSlackRedirectPageCached) {
+    log(`Slack redirect page not detected`);
     timeTillCloseMs += intervalRateMs; // Put back the time
     return;
   }
 
+  log(`Time remaining: ${Math.ceil(timeTillCloseMs / 1000)}s`);
   countdownWithText(timeTillCloseMs);
 
   if (timeTillCloseMs > 0) { return; }
@@ -168,5 +207,3 @@ function countDownToClose() {
 function closeThisTabNow() {
   chrome.runtime.sendMessage({ pleaseCloseThisTab: true });
 }
-
-let intervalId = setInterval(countDownToClose, intervalRateMs);
