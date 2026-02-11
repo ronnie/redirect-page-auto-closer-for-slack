@@ -1,6 +1,6 @@
 const intervalRateMs = 1000;
 const maxCountdownStartTimeMs = 35 * 1000;
-const minCountdownStartTimeMs = 5 * 1000;
+const minCountdownStartTimeMs = 0;
 
 const cssClassName_Wrapper = `redirect-page-auto-closer-for-slack-wrapper`;
 const cssClassName_MainPopOver = `redirect-page-auto-closer-for-slack-main-pop-over`;
@@ -29,7 +29,7 @@ function getCountdownStartTimeMs() {
   } catch (e) {
     console.error(e);
   }
-  if (!startTimeMs || startTimeMs <= minCountdownStartTimeMs || startTimeMs > maxCountdownStartTimeMs) {
+  if (typeof startTimeMs !== 'number' || isNaN(startTimeMs) || startTimeMs < minCountdownStartTimeMs || startTimeMs > maxCountdownStartTimeMs) {
     setCountdownStartTimeMs(defaultStartTimeMs); // Overwrite to self-correct
     startTimeMs = defaultStartTimeMs;
   }
@@ -79,23 +79,24 @@ function countdownWithText(countdownTimeMs) {
   }
 
   const countdownEl = wrapperEl.querySelector(`.${cssClassName_CountdownText}`);
-  countdownEl.innerText = `Closing page in ${Math.round(countdownTimeMs / 1000)} seconds`;
+  const displaySec = Math.max(0, Math.round(countdownTimeMs / 1000));
+  countdownEl.innerText = `Closing page in ${displaySec} second${displaySec !== 1 ? 's' : ''}`;
 }
 
 function injectAndUpdateSettingsMenu() {
-  const incrementalSec = 5.0;
-  const trueCountdownStartTimeSec = Math.round(getCountdownStartTimeMs() / incrementalSec / 1000.0) * incrementalSec;
+  const incrementalSec = 1;
+  const trueCountdownStartTimeSec = Math.round(getCountdownStartTimeMs() / 1000);
 
   const optionsList = [];
   const decrementValSec = trueCountdownStartTimeSec - incrementalSec;
   const incrementValSec = trueCountdownStartTimeSec + incrementalSec;
-  if (decrementValSec * 1000 >= minCountdownStartTimeMs) {
+  if (decrementValSec >= 0) {
     optionsList.push(decrementValSec);
   }
-  if (incrementValSec * 1000 < maxCountdownStartTimeMs) {
+  if (incrementValSec * 1000 <= maxCountdownStartTimeMs) {
     optionsList.push(incrementValSec);
   }
-  if (!optionsList) {
+  if (optionsList.length === 0) {
     log('no options');
     return;
   }
@@ -105,7 +106,7 @@ function injectAndUpdateSettingsMenu() {
   const settingsEl = document.createElement('div');
   settingsEl.classList.add(cssClassName_SettingsMenu);
   settingsEl.innerHTML = `
-  ${trueCountdownStartTimeSec} seconds not your speed?  Try 
+  ${trueCountdownStartTimeSec} second${trueCountdownStartTimeSec !== 1 ? 's' : ''} not your speed?  Try 
   <a class='${cssClassName_SettingsOption}'>${optionsList[0]}s</a>
   `;
   if (optionsList.length > 1) {
@@ -120,7 +121,7 @@ function injectAndUpdateSettingsMenu() {
     const op = optionsList[i];
     optionEl.onclick = () => {
       log(`New option selected: ${op}`);
-      const ms = (op + 1) * 1000;
+      const ms = op * 1000;
       timeTillCloseMs = ms;
       setCountdownStartTimeMs(ms);
       injectAndUpdateSettingsMenu();

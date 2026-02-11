@@ -11,10 +11,10 @@ This extension is HIPAA and GDPR compliant.
 Experiencing issues? Please report them here: https://forms.gle/Y64QCYkRfFd2qVXm7
 
 Fully open source, safe, and secure:
-https://github.com/ronniem/redirect-page-auto-closer-for-slack
+https://github.com/ronnie/redirect-page-auto-closer-for-slack
 
 Privacy Policy:
-https://github.com/ronniem/redirect-page-auto-closer-for-slack/blob/main/PRIVACY_POLICY.md
+https://github.com/ronnie/redirect-page-auto-closer-for-slack/blob/main/PRIVACY_POLICY.md
 
 Notices:
 This extension is not affiliated, authorized by, endorsed by, or produced by Slack Technologies.
@@ -35,9 +35,9 @@ https://www.youtube.com/watch?v=LVmwztcuIqQ
 ### Official URL
 github.com/ronniem
 ### Homepage Url
-https://github.com/ronniem/redirect-page-auto-closer-for-slack
+https://github.com/ronnie/redirect-page-auto-closer-for-slack
 ### Support URL
-https://github.com/ronniem/redirect-page-auto-closer-for-slack/issues
+https://github.com/ronnie/redirect-page-auto-closer-for-slack/issues
 
 
 ## Privacy Practices

@@ -1,6 +1,6 @@
 # redirect-page-auto-closer-for-slack
 
-Automatically closes Slack redirect pages and restores focus to the tab you were on beforehand. Supports Slack archive pages and app redirect pages. Easily change the countdown time by clicking one of the offered alternate times in blue.
+Automatically closes Slack redirect pages and restores focus to the tab you were on beforehand. Supports Slack archive pages and app redirect pages. Set the countdown from **0 seconds (instant)** up to **35 seconds**, in **1-second** steps. Easily change the countdown by clicking one of the offered alternate times in blue.
 
 ## Safest extension. No Permissions Needed.
 
